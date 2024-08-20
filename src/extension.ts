@@ -1,114 +1,38 @@
-'use strict';
-
+import * as path from 'path';
 import * as vscode from 'vscode';
-import { ApexPmd } from './lib/apexPmd';
-import { Config } from './lib/config';
-import { AppStatus } from './lib/appStatus';
-import { debounce } from 'debounce';
-import { getRootWorkspacePath } from './lib/utils';
-export { ApexPmd };
-
-const supportedLanguageCodes = ['apex', 'visualforce', 'xml'];
-const isSupportedLanguage = (langCode: string) => 0 <= supportedLanguageCodes.indexOf(langCode);
-
-const appName = 'Apex PMD';
-const settingsNamespace = 'apexPMD';
-const collection = vscode.languages.createDiagnosticCollection('apex-pmd');
-const outputChannel = vscode.window.createOutputChannel(appName);
+import { exec } from 'child_process';
 
 export function activate(context: vscode.ExtensionContext) {
-  //setup config
-  const config = new Config(context);
+  // Register a command that runs the Java program
+  const runJavaCommand = vscode.commands.registerCommand('extension.runJava', () => {
+    // Get the directory of the current script
+    const currentPath = __dirname;
+    console.log(`Current Script Directory: ${currentPath}`);
 
-  //setup instance vars
-  const pmd = new ApexPmd(outputChannel, config);
-  AppStatus.setAppName(appName);
-  AppStatus.getInstance().ok();
+    // Set up the classpath and command to run the Java program
+    const javaClassPath = [
+      path.join(currentPath, '..', 'bin', 'java'), 
+      path.join(currentPath, '..', 'src', 'antlr'), 
+      path.join(currentPath, '..', 'src', 'antlr', 'antlr4-runtime-4.13.2.jar'), 
+      path.join(currentPath, '..', 'src', 'antlr', 'antlr-4.13.2-complete.jar'),
+      path.join(currentPath, '..', 'bin', 'pmd', 'lib', 'summit-ast-2.2.0.jar')
+    ].join(path.delimiter);
+    const javaCommand = `java -cp "${javaClassPath}" HelloWorld`;
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('apex-pmd.clearProblems', () => {
-      collection.clear();
-    })
-  );
-
-  //setup commands
-  context.subscriptions.push(
-    vscode.commands.registerCommand('apex-pmd.runWorkspace', () => {
-      vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: 'Running Static Analysis on workspace',
-          cancellable: true,
-        },
-        (progress, token) => {
-          progress.report({ increment: 0 });
-          return pmd.run(getRootWorkspacePath(), collection, progress, token);
-        }
-      );
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('apex-pmd.runFileMenu', (uri: vscode.Uri) => {
-      pmd.run(uri.fsPath, collection);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('apex-pmd.runFile', (fileName: string) => {
-      if (!fileName) {
-        fileName = vscode.window.activeTextEditor.document.fileName;
-      }
-      pmd.run(fileName, collection);
-    })
-  );
-
-  //setup listeners
-  if (config.runOnFileSave) {
-    vscode.workspace.onDidSaveTextDocument((textDocument) => {
-      if (isSupportedLanguage(textDocument.languageId)) {
-        return vscode.commands.executeCommand('apex-pmd.runFile', textDocument.fileName);
+    // Execute the Java program
+    exec(javaCommand, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Error: ${stderr}`);
+        vscode.window.showErrorMessage(`Java Error: ${stderr}`);
+      } else {
+        console.log(`Output: ${stdout}`);
+        vscode.window.showInformationMessage(`Java Output: ${stdout}`);
       }
     });
-  }
-
-  if (config.runOnFileChange) {
-    vscode.workspace.onDidChangeTextDocument(
-      debounce((textDocumentChangeEvent: vscode.TextDocumentChangeEvent) => {
-        const textDocument = textDocumentChangeEvent.document;
-        if (isSupportedLanguage(textDocument.languageId)) {
-          return vscode.commands.executeCommand('apex-pmd.runFile', textDocument.fileName);
-        }
-      }, config.onFileChangeDebounce)
-    );
-  }
-
-  if (config.runOnFileOpen) {
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (isSupportedLanguage(editor.document.languageId)) {
-        return vscode.commands.executeCommand('apex-pmd.runFile', editor.document.fileName, true);
-      }
-    });
-  }
-
-  vscode.workspace.onDidChangeConfiguration((configChange: vscode.ConfigurationChangeEvent) => {
-    if (configChange.affectsConfiguration(settingsNamespace)) {
-      config.init();
-      return pmd.updateConfiguration(config);
-    }
   });
 
-  context.subscriptions.push(
-    vscode.window.onDidChangeVisibleTextEditors((editors) => {
-      const isStatusNeeded = editors.some((e) => e.document && isSupportedLanguage(e.document.languageId));
-      if (isStatusNeeded) {
-        AppStatus.getInstance().show();
-      } else {
-        AppStatus.getInstance().hide();
-      }
-    })
-  );
+  // Add the command to the extension's subscriptions
+  context.subscriptions.push(runJavaCommand);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate() {}
