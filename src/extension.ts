@@ -16,11 +16,8 @@ export function activate(context: vscode.ExtensionContext) {
 
       // Set up the classpath and command to run the Java program
       const javaClassPath = [
-        path.join(currentPath, '..', 'bin', 'java'), 
-        path.join(currentPath, '..', 'src', 'antlr'), 
-        path.join(currentPath, '..', 'src', 'antlr', 'antlr4-runtime-4.13.2.jar'), 
-        path.join(currentPath, '..', 'src', 'antlr', 'antlr-4.13.2-complete.jar'),
-        path.join(currentPath, '..', 'bin', 'pmd', 'lib', 'summit-ast-2.2.0.jar')
+        path.join(currentPath, '..', 'bin', 'java'),
+        path.join(currentPath, '..', 'bin', 'pmd', 'lib', '*')
       ].join(path.delimiter);
       const javaCommand = `java -cp "${javaClassPath}" HelloWorld ${selectedFilePath}`;
 
@@ -35,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
       });
     } else {
-      vscode.window.showErrorMessage("No file selected to run the Java program.");
+      vscode.window.showErrorMessage('No file selected to run the Java program.');
     }
   });
 

@@ -1,8 +1,11 @@
 // src/java/HelloWorld.java
 import com.google.summit.ast.CompilationUnit;
+import com.google.summit.translation.Translate;
+import com.nawforce.apexparser.ApexLexer;
+import com.nawforce.apexparser.ApexParser;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
 import java.nio.file.Paths;
+import com.google.gson.Gson;
 
 public class HelloWorld {
     public static void main(String[] args) {
@@ -14,20 +17,24 @@ public class HelloWorld {
         String filePath = args[0];
         try {
             // Convert the file content to a CharStream
+            String name = "dummy";
             ApexLexer lexer = new ApexLexer(CharStreams.fromFileName(filePath));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             ApexParser parser = new ApexParser(tokens);
-            ParseTree tree = parser.compilationUnit();
+            ApexParser.CompilationUnitContext tree = parser.compilationUnit();
 
             // Printing the parse tree
-            System.out.println(tree.toStringTree(parser));
+            // System.out.println(tree.toStringTree(parser));
 
-            // Further processing with SummitAST or other tasks
-            // ...
-        } catch (Exception e) {
+            Translate translator = new Translate(name, tokens);
+            CompilationUnit ast = translator.translate(tree);
+
+            Gson gson = new Gson();
+            String json = gson.toJson(ast);
+            System.out.println("AST as JSON: " + json);
+        } catch (Exception ex) {
             System.out.println("Error processing file: " + ex.getMessage());
         }
-        //refer SummitAST parseAndTranslate
-        //check paths and proper folder structure
+        //remove sourceLocation
     }
 }
