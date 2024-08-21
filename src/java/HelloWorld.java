@@ -2,32 +2,31 @@
 import com.google.summit.ast.CompilationUnit;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import java.nio.file.Paths;
 
 public class HelloWorld {
     public static void main(String[] args) {
-        String dummyCode = "public with sharing class ContactService {\r\n" + //
-                        "    public static Id createTaskForContact(Id contactId, String taskSubject) {\r\n" + //
-                        "        Task task = new Task(\r\n" + //
-                        "            WhoId = contactId, // Use WhoId to link the Task to a Contact\r\n" + //
-                        "            Subject = taskSubject,\r\n" + //
-                        "            Status = 'Not Started',\r\n" + //
-                        "            Priority = 'Normal'\r\n" + //
-                        "        );\r\n" + //
-                        "        insert task;\r\n" + //
-                        "        return task.Id;\r\n" + //
-                        "    }\r\n" + //
-                        "}";
+        if (args.length == 0) {
+            System.out.println("No file provided.");
+            return;
+        }
+
+        String filePath = args[0];
         try {
-            // Convert the string to a CharStream
-            ApexLexer lexer = new ApexLexer(CharStreams.fromString(dummyCode));
+            // Convert the file content to a CharStream
+            ApexLexer lexer = new ApexLexer(CharStreams.fromFileName(filePath));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             ApexParser parser = new ApexParser(tokens);
             ParseTree tree = parser.compilationUnit();
+
+            // Printing the parse tree
             System.out.println(tree.toStringTree(parser));
-        } catch(Exception ex) {
-            System.out.println(ex.getMessage());
+
+            // Further processing with SummitAST or other tasks
+            // ...
+        } catch (Exception e) {
+            System.out.println("Error processing file: " + ex.getMessage());
         }
-        
         //refer SummitAST parseAndTranslate
         //check paths and proper folder structure
     }

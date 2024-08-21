@@ -4,31 +4,39 @@ import { exec } from 'child_process';
 
 export function activate(context: vscode.ExtensionContext) {
   // Register a command that runs the Java program
-  const runJavaCommand = vscode.commands.registerCommand('extension.runJava', () => {
-    // Get the directory of the current script
-    const currentPath = __dirname;
-    console.log(`Current Script Directory: ${currentPath}`);
+  const runJavaCommand = vscode.commands.registerCommand('extension.runJava', (uri: vscode.Uri) => {
+    if (uri && uri.fsPath) {
+      // Get the selected file path
+      const selectedFilePath = uri.fsPath;
+      console.log(`Selected File: ${selectedFilePath}`);
 
-    // Set up the classpath and command to run the Java program
-    const javaClassPath = [
-      path.join(currentPath, '..', 'bin', 'java'), 
-      path.join(currentPath, '..', 'src', 'antlr'), 
-      path.join(currentPath, '..', 'src', 'antlr', 'antlr4-runtime-4.13.2.jar'), 
-      path.join(currentPath, '..', 'src', 'antlr', 'antlr-4.13.2-complete.jar'),
-      path.join(currentPath, '..', 'bin', 'pmd', 'lib', 'summit-ast-2.2.0.jar')
-    ].join(path.delimiter);
-    const javaCommand = `java -cp "${javaClassPath}" HelloWorld`;
+      // Get the directory of the current script
+      const currentPath = __dirname;
+      console.log(`Current Script Directory: ${currentPath}`);
 
-    // Execute the Java program
-    exec(javaCommand, (err, stdout, stderr) => {
-      if (err) {
-        console.error(`Error: ${stderr}`);
-        vscode.window.showErrorMessage(`Java Error: ${stderr}`);
-      } else {
-        console.log(`Output: ${stdout}`);
-        vscode.window.showInformationMessage(`Java Output: ${stdout}`);
-      }
-    });
+      // Set up the classpath and command to run the Java program
+      const javaClassPath = [
+        path.join(currentPath, '..', 'bin', 'java'), 
+        path.join(currentPath, '..', 'src', 'antlr'), 
+        path.join(currentPath, '..', 'src', 'antlr', 'antlr4-runtime-4.13.2.jar'), 
+        path.join(currentPath, '..', 'src', 'antlr', 'antlr-4.13.2-complete.jar'),
+        path.join(currentPath, '..', 'bin', 'pmd', 'lib', 'summit-ast-2.2.0.jar')
+      ].join(path.delimiter);
+      const javaCommand = `java -cp "${javaClassPath}" HelloWorld ${selectedFilePath}`;
+
+      // Execute the Java program
+      exec(javaCommand, (err, stdout, stderr) => {
+        if (err) {
+          console.error(`Error: ${stderr}`);
+          vscode.window.showErrorMessage(`Java Error: ${stderr}`);
+        } else {
+          console.log(`Output: ${stdout}`);
+          vscode.window.showInformationMessage(`Java Output: ${stdout}`);
+        }
+      });
+    } else {
+      vscode.window.showErrorMessage("No file selected to run the Java program.");
+    }
   });
 
   // Add the command to the extension's subscriptions

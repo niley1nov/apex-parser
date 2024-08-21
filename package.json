@@ -38,7 +38,16 @@
         "command": "extension.runJava",
         "title": "Run Java Program"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "extension.runJava",
+          "when": "resourceExtname == .cls",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "postversion": "npm run vscode:package && git push --tags && npm run vscode:publish && git push && echo \"Successfully released version $npm_package_version!\"",
